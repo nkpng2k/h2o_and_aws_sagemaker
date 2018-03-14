@@ -32,17 +32,20 @@ input_path = prefix + 'input/data'
 output_path = os.path.join(prefix, 'output')
 model_path = os.path.join(prefix, 'model')
 param_path = os.path.join(prefix, 'config/hyperparameters.json')
-h2o_param_path = os.path.join(prefix, 'config/h2o_params.json')
-aml_param_path = os.path.join(prefix, 'config/aml_params.json')
 
-if os.path.isfile(h2o_param_path):
-    with open(h2o_param_path, 'r') as h2op:
-        h2o_params = json.load(h2op)
-        print (h2o_param_path)
-        print ('H2O Parameters:')
-        print (h2o_params)
+if os.path.isfile(param_path):
+    with open(param_path, 'r') as pf:
+        all_params = json.load(pf)
+        print (param_path)
+        print ('All Parameters:')
+        print (all_params)
+
+training_params = all_params['training']
+h2o_params = all_params['h2o']
+aml_params = all_params['aml']
 # Initialize the H2o server, so that we can perform training using the
 # Python wrapper
+
 h2o.init(**h2o_params)
 
 # We use two sets of training data, one being the plain training data, and
@@ -64,20 +67,6 @@ test_path = os.path.join(input_path, test_channel_name)
 def train():
     print('Beginning model training')
     try:
-        # Read in any hyperparameters that the user passed with the training job
-        if os.path.isfile(param_path):
-            with open(param_path, 'r') as tc:
-                training_params = json.load(tc)
-                print (param_path)
-                print ('Training Parameters:')
-                print (training_params)
-        if os.path.isfile(aml_param_path):
-            with open(aml_param_path, 'r') as amlp:
-                aml_params = json.load(amlp)
-                print (aml_param_path)
-                print ('AutoML Parameters:')
-                print (aml_params)
-
         # Read training and validation files. We read all files but only use
         # one file ( the first one ). Need to change this eventually
         train_files = [os.path.join(training_path, file)
@@ -132,8 +121,12 @@ def train():
         # Current proof-of-concept for classification, so we make the response's
         # factors to ensure that H2o AutoML treats this as a classification
         # problem
-        train[y] = train[y].asfactor()
-        test[y] = test[y].asfactor()
+        if training_params['classification'] == 'true':
+            print('CLASSIFICATION')
+            train[y] = train[y].asfactor()
+            test[y] = test[y].asfactor()
+        else:
+            print('REGRESSION')
 
         # Actual training - we're mandating test data so that the leaderboard
         # is based off the test data.

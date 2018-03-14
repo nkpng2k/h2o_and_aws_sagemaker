@@ -1,4 +1,10 @@
 {
-  "target": "Survived",
-  "Other_param": "param_setting"
+  "training": {
+    "target": "response",
+    "classification": "true"
+  },
+  "h2o": {},
+  "aml": {
+    "max_runtime_secs": 60
+  }
 }
